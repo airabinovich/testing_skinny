@@ -9,10 +9,12 @@ case class Contact(id: Long, name: String, roles: Seq[Role] = Nil)
 object Contact extends SkinnyCRUDMapper[Contact] {
   override val defaultAlias: Alias[Contact] = createAlias("contact")
 
-  hasMany[Role](
+  val rolesRef = hasMany[Role](
     Role -> Role.defaultAlias,
     (contact, role) => sqls.eq(contact.id, role.contactId),
     (contact, roles) => contact.copy(roles = roles),
+  ).includes[Role](
+    merge = (contacts, roles) => contacts.map(c => c.copy(roles = roles.filter(_.contactId == c.id)))
   ).byDefault
 
   /**
