@@ -13,6 +13,7 @@ object Main extends App with Connection with DatasourceConfig  {
 
   // retrieving a contact won't fill the phones number inside each role
   println(s"My Contact: ${Contact.findById(contact1)}")
+  println(s"My Contact: ${Contact.includes(Contact.rolesRef).findById(contact1)}")
 
   // retrieving a role will fill the phones list
   println(s"All Roles: ${Role.findAll()}")
