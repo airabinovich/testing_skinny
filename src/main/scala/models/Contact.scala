@@ -4,7 +4,13 @@ import scalikejdbc.WrappedResultSet
 import scalikejdbc.interpolation.{SQLSyntax => sqls}
 import skinny.orm.{Alias, SkinnyCRUDMapper, SkinnyJoinTable}
 
-case class Contact(id: Long, name: String, roles: Seq[Role] = Nil)
+trait Contact {
+  def id: Long
+
+  def name: String
+
+  def roles: Seq[Role] = Nil
+}
 
 object Contact extends SkinnyCRUDMapper[Contact] {
   override val defaultAlias: Alias[Contact] = createAlias("contact")
@@ -12,14 +18,23 @@ object Contact extends SkinnyCRUDMapper[Contact] {
   val rolesRef = hasMany[Role](
     Role -> Role.defaultAlias,
     (contact, role) => sqls.eq(contact.id, role.contactId),
-    (contact, roles) => contact.copy(roles = roles),
+    (contact, roles) => new Contact {
+      override val id: Long = contact.id
+      override val name: String = contact.name
+      override val roles: Seq[Role] = roles
+    }
   ).includes[Role](
-    merge = (contacts, roles) => contacts.map(c => c.copy(roles = roles.filter(_.contactId == c.id)))
+    merge = (contacts, roles) => contacts.map(c => new Contact {
+      override val id: Long = c.id
+      override val name: String = c.name
+      override val roles: Seq[Role] = roles.filter(_.contactId == c.id)
+    })
   ).byDefault
 
   /**
     * This will save a contact, all the roles in the list and all phones in each role's list
-    * @param name the contact's name
+    *
+    * @param name  the contact's name
     * @param roles a list of RoleCommand
     * @return the new contact id
     */
@@ -29,10 +44,10 @@ object Contact extends SkinnyCRUDMapper[Contact] {
     contactId
   }
 
-  override def extract(rs: WrappedResultSet, n: scalikejdbc.ResultName[Contact]): Contact = new Contact(
-    id = rs.long(n.id),
-    name = rs.string(n.name)
-  )
+  override def extract(rs: WrappedResultSet, n: scalikejdbc.ResultName[Contact]): Contact = new Contact {
+    override val id = rs.long(n.id)
+    override val name = rs.string(n.name)
+  }
 }
 
 case class RoleCommand(name: String, phoneNumbers: Seq[Int])
