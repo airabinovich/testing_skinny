@@ -3,7 +3,7 @@ import support._
 
 object Main extends App with Connection with DatasourceConfig  {
 
-  val contact1 = Contact.save("contact1",
+  val contact1Id = Contact.save("William",
     Seq(
       RoleCommand("role1", Seq(12345, 12321)),
       RoleCommand("role2", Seq(54321, 12321)),
@@ -11,11 +11,15 @@ object Main extends App with Connection with DatasourceConfig  {
     )
   )
 
-  // retrieving a contact won't fill the phones number inside each role
-  println(s"My Contact: ${Contact.findById(contact1)}")
-  println(s"My Contact: ${Contact.includes(Contact.rolesRef).findById(contact1)}")
+  val person1Id = PersonWithNickname.save(contact1Id, "Bill")
 
-  // retrieving a role will fill the phones list
-  println(s"All Roles: ${Role.findAll()}")
+  // retrieving a contact
+  println(s"My Contact: ${Contact.findById(contact1Id)}")
+
+  // retrieving a person with nickname
+  println(s"Person With Nickname: ${Contact.findById(person1Id)}")
+
+  // mixing the person with nickname and the contact to create a friend
+  println(s"My Friend: ${Friend.from(Contact.findById(contact1Id).get, PersonWithNickname.findById(person1Id).get)}")
 
 }

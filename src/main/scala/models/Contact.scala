@@ -18,18 +18,18 @@ object Contact extends SkinnyCRUDMapper[Contact] {
   val rolesRef = hasMany[Role](
     Role -> Role.defaultAlias,
     (contact, role) => sqls.eq(contact.id, role.contactId),
-    (contact, roles) => new Contact {
+    (contact, roless) => new Contact {
       override val id: Long = contact.id
       override val name: String = contact.name
-      override val roles: Seq[Role] = roles
+      override val roles: Seq[Role] = roless
     }
   ).includes[Role](
-    merge = (contacts, roles) => contacts.map(c => new Contact {
+    merge = (contacts, roless) => contacts.map(c => new Contact {
       override val id: Long = c.id
       override val name: String = c.name
-      override val roles: Seq[Role] = roles.filter(_.contactId == c.id)
+      override val roles: Seq[Role] = roless.filter(_.contactId == c.id)
     })
-  ).byDefault
+  )//.byDefault //uncommenting this will trigger the error
 
   /**
     * This will save a contact, all the roles in the list and all phones in each role's list
@@ -66,7 +66,7 @@ object Role extends SkinnyCRUDMapper[Role] {
   ).byDefault
 
   def save(contactId: Long, name: String, phones: Seq[Int]): Long = {
-    val roleId = createWithNamedValues(column.contactId -> contactId, column.name -> name)
+    val roleId = createWithAttributes('contactId -> contactId, 'name -> name)
     phones.map(number => Phone.save(number)).map(phoneId => RolePhone.save(roleId, phoneId))
     roleId
   }

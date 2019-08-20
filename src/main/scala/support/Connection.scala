@@ -48,7 +48,13 @@ trait DatasourceConfig extends DBSeeds {
            role_id bigint(20) not null,
            phone_id bigint(20) not null
            ) engine=innoDB;
-         """
+         """,
+    sql"""
+          create table person_with_nickname (
+          id bigint(20) not null,
+          nickname varchar(200)
+          ) engine=innoDB
+      """
   )
 
   runIfFailed(sql"""select count(1) from contact""")
